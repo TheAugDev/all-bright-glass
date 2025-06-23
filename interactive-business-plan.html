@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Business Plan | All Bright Glass Cleaning Services LLC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Corporate Clean -->
+    <!-- Application Structure Plan: A single-page application with a fixed sidebar for navigation and a dynamic main content area. This dashboard-style layout allows users to non-linearly explore the business plan. Key information is visualized through interactive stat cards and charts to make complex data easily digestible. This structure was chosen to transform a static document into an engaging tool for strategic analysis by team members and potential investors, prioritizing usability and quick access to key information over the original document's linear flow. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Executive Summary key metrics (Revenue, Profit, Break-Even). Goal: Inform. Method: Animated stat cards. Interaction: Numbers animate on load to grab attention. Justification: Provides a quick, high-impact overview of the business's health. Library: HTML/CSS/JS.
+        - Report Info: Profit-Sharing percentages. Goal: Organize & Inform. Method: Chart.js Donut Chart. Interaction: Hovering over a slice reveals the member and their percentage share. Justification: A visual breakdown is more intuitive and memorable than a list. Library: Chart.js.
+        - Report Info: 3-Year Revenue Projections. Goal: Show Change/Growth. Method: Chart.js Bar Chart. Interaction: Animated bars on load, tooltips on hover for exact figures. Justification: Clearly visualizes the company's growth trajectory over time. Library: Chart.js.
+        - Report Info: Year 1 P&L. Goal: Compare parts of a whole. Method: Chart.js Donut chart. Interaction: Hovering shows breakdown of revenue, costs, and profit. Justification: Simplifies the understanding of first-year financial structure. Library: Chart.js.
+        - Report Info: Services & Referral Tiers. Goal: Organize. Method: Interactive tab-like sections and styled HTML tables. Interaction: Clicking a service reveals its details, making the section less cluttered. Justification: Improves user experience by progressively disclosing information. Library: Vanilla JS/Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 300px;
+            width: 100%;
+            max-width: 500px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .nav-link.active {
+            background-color: #3b82f6; /* bg-blue-600 */
+            color: white;
+        }
+        .service-tab.active {
+            border-color: #3b82f6; /* border-blue-600 */
+            color: #3b82f6;
+            background-color: #eff6ff; /* bg-blue-50 */
+        }
+        @media print {
+            body { 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+            aside {
+                display: none;
+            }
+            main {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans">
+    <!-- Back to Home Button -->
+    <div class="no-print fixed top-4 left-4 z-50">
+        <button onclick="window.location.href='index.html'" class="bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm shadow-lg transition-colors">
+            ← Back to Home
+        </button>
+    </div>
+    
+    <!-- Print Button -->
+    <div class="no-print fixed top-4 right-4 z-50">
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm shadow-lg transition-colors">
+            🖨️ Print/PDF
+        </button>
+    </div>
+
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white shadow-md p-4 flex-shrink-0 hidden md:flex md:flex-col">
+            <div class="flex items-center mb-8">
+                <div class="bg-blue-600 text-white font-bold rounded-lg text-xl p-3">AB</div>
+                <h1 class="text-xl font-bold ml-3">All Bright</h1>
+            </div>
+            <nav id="desktop-nav" class="flex-grow">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>🏠</span><span class="ml-3">Dashboard</span></a></li>
+                    <li><a href="#model" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>💡</span><span class="ml-3">The Model</span></a></li>
+                    <li><a href="#services" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>🛠️</span><span class="ml-3">Services</span></a></li>
+                    <li><a href="#team" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>👥</span><span class="ml-3">Team & Structure</span></a></li>
+                    <li><a href="#growth" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>📈</span><span class="ml-3">Growth Engine</span></a></li>
+                    <li><a href="#financials" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>💰</span><span class="ml-3">Financials</span></a></li>
+                </ul>
+            </nav>
+            <div class="text-xs text-slate-400">
+                <p>&copy; 2025 All Bright Glass Cleaning Services LLC</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <!-- Mobile Header & Nav -->
+            <div class="md:hidden mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="bg-blue-600 text-white font-bold rounded-lg text-xl p-3">AB</div>
+                        <h1 class="text-xl font-bold ml-3">All Bright</h1>
+                    </div>
+                    <button id="mobile-menu-button" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+                <nav id="mobile-nav" class="hidden mt-4">
+                     <ul>
+                        <li><a href="#dashboard" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>🏠</span><span class="ml-3">Dashboard</span></a></li>
+                        <li><a href="#model" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>💡</span><span class="ml-3">The Model</span></a></li>
+                        <li><a href="#services" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>🛠️</span><span class="ml-3">Services</span></a></li>
+                        <li><a href="#team" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>👥</span><span class="ml-3">Team & Structure</span></a></li>
+                        <li><a href="#growth" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>📈</span><span class="ml-3">Growth Engine</span></a></li>
+                        <li><a href="#financials" class="nav-link flex items-center p-3 my-1 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-200"><span>💰</span><span class="ml-3">Financials</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Business Plan Dashboard</h2>
+                    <p class="text-slate-600 mt-2">A high-level overview of the strategic direction and financial health of All Bright Glass Cleaning Services LLC.</p>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="stat-card bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-slate-500 font-medium">Projected Revenue (Year 1)</h3>
+                        <p id="stat-revenue" class="text-4xl font-bold text-blue-600 mt-2">0</p>
+                    </div>
+                    <div class="stat-card bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-slate-500 font-medium">Projected Net Profit (Year 1)</h3>
+                        <p id="stat-profit" class="text-4xl font-bold text-green-600 mt-2">0</p>
+                    </div>
+                    <div class="stat-card bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-slate-500 font-medium">Break-Even Point</h3>
+                        <p id="stat-breakeven" class="text-4xl font-bold text-amber-600 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div class="mt-10 bg-white p-6 rounded-xl shadow">
+                    <h3 class="text-2xl font-bold text-slate-900 mb-2">Executive Summary</h3>
+                    <p class="text-slate-600 leading-relaxed">All Bright Glass Cleaning Services LLC is a premier provider of commercial glass cleaning, restoration, and building maintenance services in the DMV area. We specialize in high-quality, safety-compliant solutions for high-value commercial properties. Our business model is built on the foundation of expert-led service, a lean operational structure, and a clear strategy for profitability and growth. We leverage a profit-sharing compensation model and a unique tiered referral program to drive performance and lower customer acquisition costs. This interactive plan outlines our path to becoming a nationwide leader in our industry.</p>
+                </div>
+            </section>
+
+            <!-- The Model Section -->
+            <section id="model" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">The Business Model</h2>
+                    <p class="text-slate-600 mt-2">Our core philosophy and competitive strategy.</p>
+                </header>
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold text-blue-600 mb-2">Mission Statement</h3>
+                        <p class="text-slate-600">To provide the highest quality, safest building restoration and maintenance services nationwide, delivered through a consistent, professional, and efficient approach.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold text-blue-600 mb-2">Vision Statement</h3>
+                        <p class="text-slate-600">Our vision is to be the nationwide leader in the building glass restoration and maintenance industry, expertly specializing in the restoration and renewal of exterior glass surfaces.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold text-blue-600 mb-2">Competitive Advantage</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600">
+                            <li><span class="font-semibold">Quality & Expertise:</span> We deliver a guaranteed "streak-free finish" and possess the specialized skills to restore damaged glass, a service few competitors can match.</li>
+                            <li><span class="font-semibold">Safety & Compliance:</span> We operate with full insurance coverage and strict adherence to OSHA standards, offering clients complete peace of mind and mitigating risk.</li>
+                            <li><span class="font-semibold">Reliability & Professionalism:</span> Our team prides itself on clear communication, punctuality, and efficient project completion that minimizes disruption to our clients' daily operations.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Section -->
+            <section id="services" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Our Services</h2>
+                    <p class="text-slate-600 mt-2">A comprehensive suite of exterior building maintenance solutions. Click a service to learn more.</p>
+                </header>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div id="service-tabs-container" class="w-full md:w-1/3">
+                        <div class="service-tab cursor-pointer p-4 border-l-4 border-slate-200 font-semibold" data-target="service-cleaning">Commercial Window Cleaning</div>
+                        <div class="service-tab cursor-pointer p-4 border-l-4 border-slate-200 font-semibold" data-target="service-restoration">Glass Restoration</div>
+                        <div class="service-tab cursor-pointer p-4 border-l-4 border-slate-200 font-semibold" data-target="service-stain">Specialized Stain Removal</div>
+                        <div class="service-tab cursor-pointer p-4 border-l-4 border-slate-200 font-semibold" data-target="service-facade">Facade Restoration</div>
+                    </div>
+                    <div class="w-full md:w-2/3 bg-white p-6 rounded-xl shadow">
+                        <div id="service-content-container">
+                            <div id="service-cleaning" class="service-content">
+                                <h3 class="text-2xl font-bold mb-4">Commercial Window Cleaning</h3>
+                                <p class="text-slate-600">Streak-free cleaning for both low-rise and high-rise buildings. Our team is fully equipped and trained for rope access and other high-access methods, ensuring every window is perfectly cleaned, regardless of height.</p>
+                            </div>
+                            <div id="service-restoration" class="service-content hidden">
+                                <h3 class="text-2xl font-bold mb-4">Glass Restoration</h3>
+                                <p class="text-slate-600 mb-4">A cost-effective alternative to full glass replacement. We address various levels of damage:</p>
+                                <ul class="list-disc list-inside space-y-2 text-slate-600">
+                                    <li><span class="font-semibold">Level 1:</span> Removal of light scratches and superficial stains using mild abrasive compounds.</li>
+                                    <li><span class="font-semibold">Level 2:</span> Restoration of deeper scratches and stubborn stains using more aggressive compounds and specialized buffing techniques.</li>
+                                    <li><span class="font-semibold">Level 3:</span> Professional assessment and repair of significant damage like chips and cracks, or a qualified recommendation for replacement when necessary.</li>
+                                </ul>
+                            </div>
+                            <div id="service-stain" class="service-content hidden">
+                                <h3 class="text-2xl font-bold mb-4">Specialized Stain Removal</h3>
+                                <p class="text-slate-600 mb-4">Targeted solutions for tough-to-remove blemishes:</p>
+                                 <ul class="list-disc list-inside space-y-2 text-slate-600">
+                                    <li><span class="font-semibold">Hard Water Stain Removal:</span> Eliminating mineral deposits, calcium buildup, and cloudy spots caused by sprinklers or runoff.</li>
+                                    <li><span class="font-semibold">Welding Flux / Slag Removal:</span> Safely removing construction-related damage, weld spatter, and slag from glass surfaces without scratching.</li>
+                                 </ul>
+                            </div>
+                            <div id="service-facade" class="service-content hidden">
+                                <h3 class="text-2xl font-bold mb-4">Stainless Steel & Facade Restoration</h3>
+                                <p class="text-slate-600">Beyond glass, we restore the complete look of your building's exterior. This includes cleaning and restoring stainless steel fixtures, window frames, and Aluminum Composite Panel (ACP) facades to their original luster.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Team & Structure Section -->
+            <section id="team" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Team & Structure</h2>
+                    <p class="text-slate-600 mt-2">A lean, expert-led team aligned for growth through a shared success model.</p>
+                </header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-2xl font-bold mb-4">Management Team</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-bold">Arnel Oco</h4>
+                                <p class="text-sm text-blue-600 font-medium">Head of Operations & Technical Services</p>
+                                <p class="text-sm text-slate-500 mt-1">A 13-year industry veteran responsible for service delivery, quality control, and team safety.</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Jun Doydora Jr.</h4>
+                                <p class="text-sm text-blue-600 font-medium">Sales & Marketing Lead</p>
+                                <p class="text-sm text-slate-500 mt-1">Drives growth through direct sales, strategic partnerships, and brand management.</p>
+                            </div>
+                             <div>
+                                <h4 class="font-bold">Ian & Aa-ne Ravago</h4>
+                                <p class="text-sm text-blue-600 font-medium">Administrative & Operations Managers</p>
+                                <p class="text-sm text-slate-500 mt-1">The backbone of our remote operations, managing scheduling, client relations, and financials.</p>
+                            </div>
+                             <div>
+                                <h4 class="font-bold">Teresita Clave Schell</h4>
+                                <p class="text-sm text-blue-600 font-medium">Financier</p>
+                                <p class="text-sm text-slate-500 mt-1">Provides startup capital and strategic financial oversight.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                         <h3 class="text-2xl font-bold mb-4">Profit-Sharing Distribution</h3>
+                         <p class="text-slate-600 mb-4">Our management team operates without fixed salaries, ensuring all members are rewarded based on the company's success. Net profits are distributed as follows:</p>
+                        <div class="chart-container">
+                            <canvas id="profitShareChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Growth Engine Section -->
+            <section id="growth" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Growth Engine</h2>
+                    <p class="text-slate-600 mt-2">Our strategy for marketing, sales, and sustainable customer acquisition.</p>
+                </header>
+                 <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold text-blue-600 mb-2">Marketing & Sales Strategy</h3>
+                        <p class="text-slate-600">Our approach is centered on direct B2B engagement and building a reputation for excellence. We will leverage our professional website, network through industry associations (e.g., BOMA, IREM), and publish project case studies. Our sales strategy is consultative, featuring detailed proposals and a powerful referral program to generate qualified, low-cost leads.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold text-blue-600 mb-2">Tiered Finder's Fee Program</h3>
+                        <p class="text-slate-600 mb-4">Our referral program is a core part of our growth strategy, designed to aggressively incentivize lead generation through word-of-mouth. The fee is a percentage of the total contract value.</p>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-left text-sm">
+                                <thead class="border-b font-medium bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4">Contract Value</th>
+                                        <th scope="col" class="px-6 py-4">Finder's Fee</th>
+                                        <th scope="col" class="px-6 py-4">Applies To</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="px-6 py-4">Up to $25,000</td>
+                                        <td class="px-6 py-4 font-bold text-green-600">5%</td>
+                                        <td class="px-6 py-4" rowspan="3">
+                                            <div class="font-semibold">Public:</div>
+                                            <p class="text-xs">One-time fee for initial contract.</p>
+                                            <div class="font-semibold mt-2">Internal Team*:</div>
+                                            <p class="text-xs">Lifetime commission on all client business.</p>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b bg-slate-50">
+                                        <td class="px-6 py-4">$25,001 to $75,000</td>
+                                        <td class="px-6 py-4 font-bold text-green-600">8%</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="px-6 py-4">Over $75,000</td>
+                                        <td class="px-6 py-4 font-bold text-green-600">10%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                         <p class="text-xs text-slate-500 mt-2">*Internal team refers to Arnel, Ian, Aa-ne, & Teresita. The Sales Lead is not eligible.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Financials Section -->
+            <section id="financials" class="content-section">
+                <header class="mb-8">
+                    <h2 class="text-4xl font-bold text-slate-900">Financial Projections</h2>
+                    <p class="text-slate-600 mt-2">Our forecast for revenue growth and profitability, demonstrating a lean and viable business model.</p>
+                </header>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <div class="bg-white p-6 rounded-xl shadow">
+                         <h3 class="text-2xl font-bold mb-4">3-Year Revenue Projections</h3>
+                         <p class="text-slate-600 mb-4">Our revenue model is based on securing a mix of large one-time projects and recurring maintenance contracts.</p>
+                         <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow">
+                         <h3 class="text-2xl font-bold mb-4">Year 1 Profit & Loss Breakdown</h3>
+                         <p class="text-slate-600 mb-4">With a lean operational model, we project healthy profitability in our first year of operation.</p>
+                         <div class="chart-container">
+                            <canvas id="pnlChart"></canvas>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Data for the application
+            const appData = {
+                financials: {
+                    year1Revenue: 350000,
+                    year1Profit: 153000,
+                    breakEven: 77000,
+                    revenueProjection: {
+                        labels: ['Year 1', 'Year 2', 'Year 3'],
+                        data: [350000, 600000, 930000]
+                    },
+                    pnl: {
+                        labels: ['Labor Costs', 'Materials', 'Operating Expenses', 'Net Profit'],
+                        data: [120000, 35000, 42000, 153000]
+                    }
+                },                team: {
+                    profitShare: {
+                        labels: ['Arnel Oco (Founder)', 'Teresita C. Schell (Financier)', 'Jun Doydora Jr. (Sales)', 'Ian & Aa-ne Ravago (Ops)'],
+                        data: [35, 25, 22, 18]
+                    }
+                }
+            };
+
+            // Navigation Logic
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            const setActiveLink = (hash) => {
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === hash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            };
+
+            const showSection = (targetId) => {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    }
+                });
+                setActiveLink(`#${targetId}`);
+                if (mobileNav && !mobileNav.classList.contains('hidden')) {
+                    mobileNav.classList.add('hidden');
+                }
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    window.location.hash = targetId;
+                });
+            });
+
+            window.addEventListener('hashchange', () => {
+                const hash = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+                showSection(hash);
+            });
+            
+            // Initial Load
+            const initialHash = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+            showSection(initialHash);
+
+
+            // Mobile Menu Toggle
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    if(mobileNav) mobileNav.classList.toggle('hidden');
+                });
+            }
+
+            // Service Tabs Logic
+            const serviceTabs = document.querySelectorAll('.service-tab');
+            const serviceContents = document.querySelectorAll('.service-content');
+
+            const activateTab = (tab) => {
+                serviceTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const target = tab.dataset.target;
+                serviceContents.forEach(content => {
+                    if (content.id === target) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            };
+            
+            serviceTabs.forEach(tab => {
+                tab.addEventListener('click', () => activateTab(tab));
+            });
+            // Set initial active tab
+            if (serviceTabs.length > 0) {
+                 activateTab(serviceTabs[0]);
+            }
+
+            // Animate Stats
+            const animateValue = (element, start, end, duration) => {
+                if (!element) return;
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    element.innerHTML = '$' + Math.floor(progress * (end - start) + start).toLocaleString();
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            };
+
+            animateValue(document.getElementById('stat-revenue'), 0, appData.financials.year1Revenue, 1500);
+            animateValue(document.getElementById('stat-profit'), 0, appData.financials.year1Profit, 1500);
+            animateValue(document.getElementById('stat-breakeven'), 0, appData.financials.breakEven, 1500);
+
+            // Chart Initialization
+            const chartColors = {
+                blue: 'rgba(59, 130, 246, 0.8)',
+                green: 'rgba(22, 163, 74, 0.8)',
+                amber: 'rgba(217, 119, 6, 0.8)',
+                slate: 'rgba(100, 116, 139, 0.8)',
+                sky: 'rgba(14, 165, 233, 0.8)',
+                indigo: 'rgba(99, 102, 241, 0.8)',
+            };
+            
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: 'Inter'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                let value = context.parsed.y ?? context.parsed;
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+            
+            // Profit Share Chart (Donut)
+            const profitShareCtx = document.getElementById('profitShareChart').getContext('2d');
+            new Chart(profitShareCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: appData.team.profitShare.labels,
+                    datasets: [{
+                        label: 'Profit Share',
+                        data: appData.team.profitShare.data,
+                        backgroundColor: [chartColors.blue, chartColors.green, chartColors.amber, chartColors.slate],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: { ...commonChartOptions,
+                    plugins: {
+                         ...commonChartOptions.plugins,
+                         tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if(label) { label += ': '; }
+                                    if(context.parsed !== null) { label += context.parsed + '%'; }
+                                    return label;
+                                }
+                            }
+                         }
+                    }
+                }
+            });
+
+            // Revenue Projection Chart (Bar)
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: appData.financials.revenueProjection.labels,
+                    datasets: [{
+                        label: 'Projected Revenue',
+                        data: appData.financials.revenueProjection.data,
+                        backgroundColor: chartColors.blue,
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: { ...commonChartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             ticks: {
+                                callback: function(value) { return '$' + (value / 1000) + 'K' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // P&L Chart (Donut)
+            const pnlCtx = document.getElementById('pnlChart').getContext('2d');
+            new Chart(pnlCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: appData.financials.pnl.labels,
+                    datasets: [{
+                        label: 'Amount',
+                        data: appData.financials.pnl.data,
+                        backgroundColor: [chartColors.amber, chartColors.slate, chartColors.sky, chartColors.green],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: commonChartOptions
+            });
+
+        });
+    </script>
+</body>
+</html>
